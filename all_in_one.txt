@@ -1,0 +1,95 @@
+#include <Adafruit_ADXL343.h>
+#include <DHT.h>  
+#include <ESP8266WiFi.h>
+
+String apiKey1 = "L9AXS87DH4QXV633"; // Enter your Write API key for air quality
+String apiKey2 = "AXUYQE0UE0455HN7"; // Enter your Write API key for temp, humidity
+const char *ssid = "imcr7"; 
+const char *pass = "12345678";
+const char* server = "api.thingspeak.com";
+WiFiClient client;
+
+#define DHTPIN 0          //pin where the dht11 is connected
+
+DHT dht(DHTPIN, DHT11);
+
+void setup() 
+{
+    Serial.begin(115200);
+    delay(10);
+    dht.begin();
+    Serial.println("Connecting to ");
+    Serial.println(ssid);
+    WiFi.begin(ssid, pass);
+
+    while (WiFi.status() != WL_CONNECTED) 
+    {
+        delay(500);
+        Serial.print(".");
+    }
+
+    Serial.println("");
+    Serial.println("WiFi connected");
+}
+
+void loop() 
+{
+    float h = dht.readHumidity();
+    float t = dht.readTemperature();
+    float mq = analogRead(A0);
+    if (isnan(h) || isnan(t)) 
+    {
+        Serial.println("Failed to read from DHT sensor!");
+        return;
+    }
+
+    if (isnan(mq))
+    {
+        Serial.println("Failed to read from MQ-5 sensor!");
+        return;
+    }
+ 
+    if (client.connect(server,80))   //   "184.106.153.149" or api.thingspeak.com
+    {  
+        String postStr1 = apiKey1;   // Air Quality
+        String postStr2 = apiKey2;   // Temperature & Humidity
+        
+        postStr1 += "&field1=";
+        postStr1 += String(mq/1023*100);
+        postStr1 += "r\n";
+
+        postStr2 +="&field1=";
+        postStr2 += String(t);
+        postStr2 +="&field2=";
+        postStr2 += String(h);
+        postStr2 += "\r\n\r\n";
+
+        client.print("POST /update HTTP/1.1\n");
+        client.print("Host: api.thingspeak.com\n");
+        client.print("Connection: close\n");
+        client.print("X-THINGSPEAKAPIKEY: " + apiKey1 + "\n");
+        client.print("X-THINGSPEAKAPIKEY: " + apiKey2 +" \n");
+        client.print("Content-Type: application/x-www-form-urlencoded\n");
+        client.print("Content-Length: ");
+        client.print(postStr1.length());
+        client.print(postStr2.length());
+        client.print("\n\n");
+        client.print(postStr1);
+        client.print(postStr2);
+
+        Serial.print("Gas Level: ");
+        Serial.println(mq/1023*100);
+        Serial.print("Temperature: ");
+        Serial.print(t);
+        Serial.print(" degrees Celcius, Humidity: ");
+        Serial.print(h);
+        Serial.println("%. Send to Thingspeak.");
+    }
+
+    client.stop();
+    Serial.println("Waiting...");
+
+  // thingspeak needs minimum 15 sec delay between updates
+
+  delay(1500);
+}
