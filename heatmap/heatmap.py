@@ -17,7 +17,7 @@ window = Tk()
 
 
 
-gmaps.configure(api_key = 'AIzaSyBcT_KzlYcyYf-171L7pR6ngBgZHYq24C4')
+gmaps.configure(api_key = '')
 
 fig = gmaps.figure(map_type='SATELLITE')
 

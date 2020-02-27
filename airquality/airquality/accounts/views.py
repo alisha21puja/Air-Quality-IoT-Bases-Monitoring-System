@@ -6,7 +6,10 @@ from django.shortcuts import render
 
 import gmaps
 
+from django.contrib.auth.models import User
+from django.contrib.auth import authenticate, login, logout
 
+from django.contrib import messages
 import gmaps
 import gmaps.datasets
 import os
@@ -29,81 +32,40 @@ def fun(request):
 	return render(request,'index.html',{'fig':fig})
 
 
+def login_signup(request):
+    return render(request,'login.html')
+
 def index(request):
-	return render(request,'index.html')
+	return render(request,'accounts.html')
 
 def login(request):
-	return render(request,'accounts.html')
+	return render(request,'login.html')
 
 def signup(request):
     if request.method == 'POST':
-        first_name = request.POST['firstname']
-        last_name = request.POST['lastname']
+        first_name = request.POST['first_name']
+        last_name = request.POST['last_name']
         username = request.POST['username']
         email = request.POST['email']
         password = request.POST['password']
-        password2 = request.POST['confirmpassword']
-        phone = request.POST['phone']
-        type_usr = request.POST['type_usr']
-        src = request.POST['profile_img']
-        #mobile  = request.POST['mobile']
-        #userType = request.POST['usertype']
-        if password == password2:
-            if User.objects.filter(username=username).exists():
-                messages.error(request, "That username is taken")
-                return render(request, 'login.html', {'errorr': 'Username is already taken'})
-                # return redirect('accounts')
-            else:
-                if User.objects.filter(email=email).exists():
-                    messages.error(request, "That email is been use")
-                    return render(request, 'login.html', {'errorr': 'Email is in use '+email})
-                    return redirect('accounts')
-                else:
-                    user = User.objects.create_user(
-                        username=username, password=password, email=email, first_name=first_name, last_name=last_name)
-                    # auth.login(request,user)
-                    #messages.success(request,'You are now Loged in')
-                    user.save()
-                    key = user._get_pk_val()
-                    var = UserProfile(id=key, type_usr=type_usr,
-                                      phone=phone, profile_img=src)
-                    var.save()
-                    message = ""
-                    if type_usr == 100:
-                        message = "User Name :"+email + " PASSWORD :" + password + \
-                            " EMAIL : "+email+" PHONE : "+phone+" Role : PARTICIPANT"
-                    elif type_usr == 200:
-                        message = "User Name :"+email + " PASSWORD :" + password + \
-                            " EMAIL : "+email+" PHONE : "+phone+" Role : SPONSER"
-                    elif type_usr == 300:
-                        message = "User Name :"+email + " PASSWORD :" + password + \
-                            " EMAIL : "+email+" PHONE : "+phone+" Role : ORGANISER"
-
-                    send_mail('Subject' + "YOU HAVE NOW REGISTERED TO TECH EVENT",
-                              'Message' + message + 'Will Contact your soon',
-                              'sachin.thakur9614@gmail.com',
-                              [email, 'sachin.thakur@mca.christuniversity.in', ],
-                              fail_silently=True)
-                    messages.success(request, 'You are now registered in')
-                    return redirect('accounts')
-        elif first_name == '':
-            messages.error(request, 'FirstName  field  is empty')
-        elif last_name == '':
-            messages.error(request, 'Last Name field  is empty')
-        elif username == '':
-            messages.error(request, 'Username field  is empty')
-        elif email == '':
-            messages.error(request, 'Email field   is empty')
-        elif password == '':
-            messages.error(request, 'Password is empty')
-        elif password2 == '':
-            messages.error(request, 'Confirm password field is empty')
+        if User.objects.filter(username=username).exists():
+            messages.error(request, "That username is taken")
+            return render(request, 'login.html', {'errorr': 'Username is already taken'})
+            # return redirect('accounts')
         else:
-            messages.error(request, 'Password do not match')
-            return redirect('accounts')
-    else:
-        return render(request, 'base.html')
-
+            if User.objects.filter(email=email).exists():
+                messages.error(request, "That email is been use")
+                return render(request, 'login.html', {'errorr': 'Email is in use '+email})
+                return redirect('accounts')
+            else:
+                user = User.objects.create_user(
+                    username=username, password=password, email=email, first_name=first_name, last_name=last_name)
+                # auth.login(request,user)
+                #messages.success(request,'You are now Loged in')
+                user.save()
+                messages.success(request, 'You are now registered in')
+                return redirect('accounts')
+    
 
 
 
